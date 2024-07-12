@@ -3,7 +3,7 @@ import smtplib
 from email.message import EmailMessage
 
 # Configure Celery
-celery = Celery('tasks', broker='amqp://guest@localhost//')
+celery = Celery('tasks', broker='amqp://guest@localhost//') #set up your own broker using 'amqp://[user]:[password]@[hostname]:[port]/[virtual_host]'
 
 @celery.task
 def send_email(recipient):
