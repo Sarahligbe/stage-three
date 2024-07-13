@@ -1,9 +1,40 @@
 from flask import Flask, request, jsonify, Response
-from celery_tasks import send_email
+from celery import Celery
+import smtplib
+from email.message import EmailMessage
 import logging
 from datetime import datetime
+import os
 
 app = Flask(__name__)
+
+# Celery configuration
+app.config['CELERY_BROKER_URL'] = 'amqp://saysay:saysaymoney@localhost/saysay_vhost'
+app.config['CELERY_RESULT_BACKEND'] = 'rpc://'
+
+# Initialize Celery
+celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
+celery.conf.update(app.config)
+
+@celery.task
+def send_email(recipient):
+    msg = EmailMessage()
+    msg.set_content("You have reached the endpoint successfully")
+    msg['Subject'] = "Welcome!"
+    msg['From'] = "sarahligbe12@gmail.com"
+    msg['To'] = recipient
+
+    #SMTP server details
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+    smtp_username = "sarahligbe12@gmail.com"
+    smtp_password = "eltkqrpyifldihmr"
+
+    with smtplib.SMTP(smtp_server, smtp_port) as server:
+        server.starttls()
+        server.login(smtp_username, smtp_password)
+        server.send_message(msg)
+        server.quit()
 
 # Configure logging
 logging.basicConfig(filename='/var/log/messaging_system.log', level=logging.INFO,
@@ -17,18 +48,29 @@ def handle_request():
         return jsonify({"message": f"Email queued for sending to {recipient}"})
     elif 'talktome' in request.args:
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        logging.info("Request logged at {current_time}")
+        logging.info(f"Request logged at {current_time}")
         return jsonify({"message": f"Request logged at {current_time}"})
     else:
         return jsonify({"error": "Invalid request. Use ?sendmail=email@example.com or ?talktome parameter"}), 400
 
-@app.route('/log')
+@app.route('/logs')
 def view_log():
+    log_path = '/var/log/messaging_system.log'
     try:
-        with open('/var/log/messaging_system.log', 'r') as log_file:
-            return Response(log_file.read(), mimetype='text/plain')
-    except FileNotFoundError:
-        return jsonify({"error": "Log file not found"}), 404
+        if not os.path.exists(log_path):
+            return jsonify({"error": "Log file not found"}), 404
+
+        def generate():
+            with open(log_path, 'r') as log_file:
+                for line in log_file:
+                    yield line
+
+        return Response(generate(), mimetype='text/plain')
+    except PermissionError:
+        return jsonify({"error": "Permission denied to access log file"}), 403
+    except Exception as e:
+        app.logger.error(f"Error accessing log file: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
