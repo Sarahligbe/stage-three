@@ -39,9 +39,27 @@ def send_email(recipient):
         server.send_message(msg)
         server.quit()
 
-# Configure logging
-logging.basicConfig(filename='/var/log/messaging_system.log', level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+# Define the log file path
+log_file_path = '/var/log/messaging_system.log'
+
+# Ensure the directory exists
+os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
+
+try:
+    # Try to create or open the file
+    with open(log_file_path, 'a') as f:
+        pass  # Just open and close the file to create it if it doesn't exist
+    # Configure logging
+    logging.basicConfig(filename=log_file_path, level=logging.INFO,
+                        format='%(asctime)s - %(levelname)s - %(message)s')
+    print(f"Log file created successfully at {log_file_path}")
+    logging.info("Logging system initialized")
+
+except PermissionError:
+    print(f"Permission denied: Unable to create or write to {log_file_path}")
+    print("You may need to run the script with sudo or adjust file permissions")
+except Exception as e:
+    print(f"An error occurred: {str(e)}")
 
 @app.route('/')
 def handle_request():
