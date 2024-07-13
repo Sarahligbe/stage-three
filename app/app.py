@@ -9,7 +9,7 @@ import os
 app = Flask(__name__)
 
 # Celery configuration
-app.config['CELERY_BROKER_URL'] = 'amqp://saysay:saysaymoney@localhost/saysay_vhost'
+app.config['CELERY_BROKER_URL'] = 'amqp://your_username:your_password@localhost/your_vhost'
 app.config['CELERY_RESULT_BACKEND'] = 'rpc://'
 
 # Initialize Celery
@@ -21,14 +21,14 @@ def send_email(recipient):
     msg = EmailMessage()
     msg.set_content("You have reached the endpoint successfully")
     msg['Subject'] = "Welcome!"
-    msg['From'] = "sarahligbe12@gmail.com"
+    msg['From'] = "your_email@gmail.com"
     msg['To'] = recipient
 
     #SMTP server details
     smtp_server = "smtp.gmail.com"
     smtp_port = 587
-    smtp_username = "sarahligbe12@gmail.com"
-    smtp_password = "eltkqrpyifldihmr"
+    smtp_username = "your_email@gmail.com"
+    smtp_password = "16_character_app_password"
 
     with smtplib.SMTP(smtp_server, smtp_port) as server:
         server.starttls()
