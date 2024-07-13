@@ -5,11 +5,14 @@ from email.message import EmailMessage
 import logging
 from datetime import datetime
 import os
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 
+load_dotenv()
+
 # Celery configuration
-app.config['CELERY_BROKER_URL'] = 'amqp://your_username:your_password@localhost/your_vhost'
+app.config['CELERY_BROKER_URL'] = f"amqp://{os.getenv('CELERY_USERNAME')}:{os.getenv('CELERY_PASSWORD')}@localhost/{os.getenv('CELERY_VHOST')}"
 app.config['CELERY_RESULT_BACKEND'] = 'rpc://'
 
 # Initialize Celery
@@ -21,14 +24,14 @@ def send_email(recipient):
     msg = EmailMessage()
     msg.set_content("You have reached the endpoint successfully")
     msg['Subject'] = "Welcome!"
-    msg['From'] = "your_email@gmail.com"
+    msg['From'] = os.getenv('SMTP_USERNAME')
     msg['To'] = recipient
 
     #SMTP server details
     smtp_server = "smtp.gmail.com"
     smtp_port = 587
-    smtp_username = "your_email@gmail.com"
-    smtp_password = "16_character_app_password"
+    smtp_username = os.getenv('SMTP_USERNAME')
+    smtp_password = os.getenv('SMTP_PASSWORD')
 
     with smtplib.SMTP(smtp_server, smtp_port) as server:
         server.starttls()
